@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="meta-title">Aivizex — AI, Finance, Insurance, Health & Remote Work Insights</title>
+  <meta id="meta-desc" name="description" content="Latest US insights, guides, and analysis on AI & Tech, Personal Finance, Insurance, Health, and Remote Work." />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://jsdelivr.net"></script>
+</head>
+<body>
+
+  <!-- Top Sticky Header -->
+  <header class="navbar">
+    <div class="container nav-content">
+      <a href="#" class="logo" onclick="resetHome()">Aivizex<span>.</span></a>
+      
+      <nav class="nav-links" id="category-nav">
+        <button class="cat-btn active" data-cat="All">All</button>
+        <button class="cat-btn" data-cat="AI & Tech">AI & Tech</button>
+        <button class="cat-btn" data-cat="Finance">Finance</button>
+        <button class="cat-btn" data-cat="Insurance">Insurance</button>
+        <button class="cat-btn" data-cat="Health">Health</button>
+        <button class="cat-btn" data-cat="Remote Work">Remote Work</button>
+      </nav>
+
+      <div class="nav-actions">
+        <input type="text" id="search-input" placeholder="Search articles..." />
+        <button id="theme-toggle" title="Toggle Dark Mode">🌓</button>
+        <button id="auth-btn" class="btn-outline">Sign In</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container">
+    <!-- Homepage Feed View -->
+    <div id="home-view">
+      <!-- AdSense Top Banner Slot -->
+      <div class="ad-slot">Advertisement Space (Google AdSense Ready)</div>
+
+      <section id="hero-section" class="hero-grid"></section>
+      
+      <h2 class="section-heading" id="feed-title">Latest Articles</h2>
+      <section id="articles-grid" class="articles-grid"></section>
+    </div>
+
+    <!-- Single Article Reading View -->
+    <article id="article-view" class="article-detail hidden">
+      <button onclick="resetHome()" class="back-btn">← Back to Articles</button>
+      <div id="article-content-box"></div>
+      <div class="ad-slot">In-Article Advertisement Space</div>
+    </article>
+
+    <!-- Legal / Info Pages View (For AdSense Approval) -->
+    <section id="static-page-view" class="article-detail hidden">
+      <button onclick="resetHome()" class="back-btn">← Back to Home</button>
+      <div id="static-page-content"></div>
+    </section>
+  </main>
+
+  <!-- Strictly Hidden '+' Floating Button (Visible ONLY for amitrky177@gmail.com) -->
+  <button id="admin-fab" class="fab hidden" title="Write New Article">+</button>
+
+  <!-- Article Publisher Modal -->
+  <div id="editor-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Publish New Article on Aivizex</h2>
+        <button id="close-modal" class="close-btn">×</button>
+      </div>
+      <form id="article-form">
+        <label>Article Title</label>
+        <input type="text" id="post-title" required placeholder="e.g., Top 10 AI Tools Saving US Businesses Thousands in 2026" />
+
+        <label>Select Category</label>
+        <select id="post-category" required>
+          <option value="AI & Tech">AI & Tech</option>
+          <option value="Finance">Finance</option>
+          <option value="Insurance">Insurance</option>
+          <option value="Health">Health</option>
+          <option value="Remote Work">Remote Work</option>
+        </select>
+
+        <label>Upload Cover Image</label>
+        <input type="file" id="post-image" accept="image/*" required />
+
+        <label>Article Content (Supports HTML formatting like &lt;h2&gt;, &lt;p&gt;, &lt;b&gt;, &lt;ul&gt;)</label>
+        <div class="editor-toolbar">
+          <button type="button" onclick="insertTag('<h2>', '</h2>')">H2 Heading</button>
+          <button type="button" onclick="insertTag('<p>', '</p>')">Paragraph</button>
+          <button type="button" onclick="insertTag('<b>', '</b>')">Bold</button>
+          <button type="button" onclick="insertTag('<ul><li>', '</li></ul>')">Bullet List</button>
+        </div>
+        <textarea id="post-content" rows="10" required placeholder="Write your detailed US-focused English article here..."></textarea>
+
+        <button type="submit" id="publish-btn" class="btn-primary">Publish Live Now</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer (Required for Google AdSense Approval) -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div>
+        <h3>Aivizex<span>.</span></h3>
+        <p>Your trusted source for AI & Tech, Personal Finance, Insurance, Health, and Remote Work insights.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#" onclick="openStaticPage('about')">About Us</a>
+        <a href="#" onclick="openStaticPage('contact')">Contact Us</a>
+        <a href="#" onclick="openStaticPage('privacy')">Privacy Policy</a>
+        <a href="#" onclick="openStaticPage('disclaimer')">Disclaimer</a>
+      </div>
+    </div>
+    <p class="copyright">© 2026 Aivizex. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
