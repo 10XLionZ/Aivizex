@@ -8,6 +8,7 @@ let allArticles = [];
 let currentCategory = 'All';
 
 // 1. Auth Check & Strict '+' Button Visibility
+// 1. Direct Email + Password Admin Login (No Google Cloud Needed)
 async function checkUser() {
   const { data: { user } } = await sb.auth.getUser();
   const authBtn = document.getElementById('auth-btn');
@@ -16,18 +17,30 @@ async function checkUser() {
   if (user) {
     authBtn.textContent = 'Sign Out';
     authBtn.onclick = async () => { await sb.auth.signOut(); location.reload(); };
-    // Strictly show '+' ONLY for amitrky177@gmail.com
     if (user.email === ADMIN_EMAIL) {
       fab.classList.remove('hidden');
     } else {
       fab.classList.add('hidden');
     }
   } else {
-    authBtn.textContent = 'Sign In';
-    authBtn.onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    authBtn.textContent = 'Admin Login';
+    authBtn.onclick = async () => {
+      const email = prompt('Enter Admin Email:');
+      if (!email) return;
+      const password = prompt('Enter Admin Password:');
+      if (!password) return;
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('Login Failed: ' + error.message);
+      } else {
+        location.reload();
+      }
+    };
     fab.classList.add('hidden');
   }
 }
+
 
 // 2. Fetch Real Articles from Supabase
 async function loadArticles() {
