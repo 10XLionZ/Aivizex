@@ -1,51 +1,104 @@
-// === अपनी Supabase Keys यहाँ पेस्ट करें ===
-const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_PUBLIC_KEY';
+// === अपनी असली Supabase Keys यहाँ पेस्ट करें ===
+const SUPABASE_URL = 'https://pebyjktrdedywsmjcfmq.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'sb_publishable_bZR0YBgOCr-H_MknxgCwCg_07bz3NOU';
 const ADMIN_EMAIL = 'amitrky177@gmail.com';
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let sb = null;
+try {
+  if (SUPABASE_URL.startsWith('http')) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) {
+  console.error('Supabase Init Error:', e);
+}
+
 let allArticles = [];
 let currentCategory = 'All';
 
-// 1. Auth Check & Strict '+' Button Visibility
-// 1. Direct Email + Password Admin Login (No Google Cloud Needed)
+// 1. Create a Clean Login Modal Dynamically (Works on all browsers & phones)
+const loginModalHTML = `
+  <div id="login-modal" class="modal hidden">
+    <div class="modal-card" style="max-width:400px;">
+      <div class="modal-header">
+        <h2>Admin Sign In</h2>
+        <button id="close-login" class="close-btn">×</button>
+      </div>
+      <form id="login-form" style="display:flex; flex-direction:column; gap:12px;">
+        <input type="email" id="login-email" placeholder="Admin Email" value="amitrky177@gmail.com" required style="padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text);" />
+        <input type="password" id="login-pass" placeholder="Enter Password" required style="padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text);" />
+        <button type="submit" id="login-submit-btn" class="btn-primary">Sign In</button>
+      </form>
+    </div>
+  </div>
+`;
+document.body.insertAdjacentHTML('beforeend', loginModalHTML);
+
+document.getElementById('close-login').onclick = () => document.getElementById('login-modal').classList.add('hidden');
+
+document.getElementById('login-form').onsubmit = async (e) => {
+  e.preventDefault();
+  if (!sb) {
+    alert('Error: Please add your real SUPABASE_URL and SUPABASE_ANON_KEY in app.js first!');
+    return;
+  }
+  const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-pass').value;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    alert('Login Failed: ' + error.message);
+    btn.disabled = false; btn.textContent = 'Sign In';
+  } else {
+    document.getElementById('login-modal').classList.add('hidden');
+    location.reload();
+  }
+};
+
+// 2. Check User Auth Status
 async function checkUser() {
-  const { data: { user } } = await sb.auth.getUser();
   const authBtn = document.getElementById('auth-btn');
   const fab = document.getElementById('admin-fab');
 
+  // Default click action so button ALWAYS responds
+  authBtn.onclick = () => {
+    if (!sb) {
+      alert('Supabase Keys missing in app.js! Please paste your Project URL and Anon Key.');
+      return;
+    }
+    document.getElementById('login-modal').classList.remove('hidden');
+  };
+
+  if (!sb) return;
+
+  const { data: { user } } = await sb.auth.getUser();
   if (user) {
     authBtn.textContent = 'Sign Out';
-    authBtn.onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    authBtn.onclick = async () => {
+      await sb.auth.signOut();
+      location.reload();
+    };
     if (user.email === ADMIN_EMAIL) {
       fab.classList.remove('hidden');
     } else {
       fab.classList.add('hidden');
     }
   } else {
-    authBtn.textContent = 'Admin Login';
-    authBtn.onclick = async () => {
-      const email = prompt('Enter Admin Email:');
-      if (!email) return;
-      const password = prompt('Enter Admin Password:');
-      if (!password) return;
-
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('Login Failed: ' + error.message);
-      } else {
-        location.reload();
-      }
-    };
+    authBtn.textContent = 'Sign In';
     fab.classList.add('hidden');
   }
 }
 
-
-// 2. Fetch Real Articles from Supabase
+// 3. Load Live Articles from Supabase
 async function loadArticles() {
+  if (!sb) return;
   const { data, error } = await sb.from('articles').select('*').order('created_at', { ascending: false });
-  if (error) { console.error(error); return; }
+  if (error) {
+    console.error('Load Error:', error);
+    return;
+  }
   allArticles = data || [];
   renderArticles();
 }
@@ -53,7 +106,7 @@ async function loadArticles() {
 function renderArticles(searchQuery = '') {
   const hero = document.getElementById('hero-section');
   const grid = document.getElementById('articles-grid');
-  
+
   let filtered = allArticles.filter(art => {
     const matchCat = currentCategory === 'All' || art.category === currentCategory;
     const matchSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) || art.content.toLowerCase().includes(searchQuery.toLowerCase());
@@ -66,9 +119,8 @@ function renderArticles(searchQuery = '') {
     return;
   }
 
-  // Hero Section (Latest Featured + Side Articles)
   if (currentCategory === 'All' && !searchQuery) {
-    const main = filtered[0];
+    const main = filtered;
     const side = filtered.slice(1, 3);
     hero.innerHTML = `
       <div class="card hero-main" onclick="openArticle('${main.id}')">
@@ -108,7 +160,6 @@ function calcReadTime(text) {
   return Math.max(1, Math.ceil(words / 200));
 }
 
-// 3. Open Full Article View + Dynamic SEO Meta Tags
 function openArticle(id) {
   const art = allArticles.find(a => a.id === id);
   if (!art) return;
@@ -156,17 +207,25 @@ document.getElementById('article-form').onsubmit = async (e) => {
   const title = document.getElementById('post-title').value;
   const category = document.getElementById('post-category').value;
   const content = document.getElementById('post-content').value;
-  const file = document.getElementById('post-image').files[0];
+  const file = document.getElementById('post-image').files;
 
   const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
   const { error: uploadErr } = await sb.storage.from('article-images').upload(fileName, file);
-  if (uploadErr) { alert('Image upload failed: ' + uploadErr.message); btn.disabled = false; return; }
+  if (uploadErr) {
+    alert('Image upload failed: ' + uploadErr.message);
+    btn.disabled = false; btn.textContent = 'Publish Live Now';
+    return;
+  }
 
   const { data: { publicUrl } } = sb.storage.from('article-images').getPublicUrl(fileName);
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   const { error: insertErr } = await sb.from('articles').insert([{ title, slug, category, content, cover_image_url: publicUrl }]);
-  if (insertErr) { alert('Publish failed: ' + insertErr.message); btn.disabled = false; return; }
+  if (insertErr) {
+    alert('Publish failed: ' + insertErr.message);
+    btn.disabled = false; btn.textContent = 'Publish Live Now';
+    return;
+  }
 
   document.getElementById('article-form').reset();
   document.getElementById('editor-modal').classList.add('hidden');
@@ -189,20 +248,4 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
 document.getElementById('search-input').oninput = (e) => renderArticles(e.target.value);
 document.getElementById('theme-toggle').onclick = () => document.body.classList.toggle('dark');
 
-// Static Pages for AdSense Approval
 function openStaticPage(page) {
-  document.getElementById('home-view').classList.add('hidden');
-  document.getElementById('article-view').classList.add('hidden');
-  document.getElementById('static-page-view').classList.remove('hidden');
-  const pages = {
-    about: '<h1>About Aivizex</h1><p>Aivizex is an independent digital publication providing actionable, well-researched insights on AI & Tech, Personal Finance, Insurance, Health, and Remote Work for readers worldwide.</p>',
-    contact: '<h1>Contact Us</h1><p>Have questions, feedback, or partnership inquiries? Reach out to our editorial team at: <b>contact@aivizex.com</b> (or amitrky177@gmail.com).</p>',
-    privacy: '<h1>Privacy Policy</h1><p>At Aivizex, we respect your privacy. We use standard cookies and third-party advertising partners like Google AdSense to serve relevant ads based on user visits.</p>',
-    disclaimer: '<h1>Disclaimer</h1><p>The content published on Aivizex regarding Finance, Insurance, and Health is for informational and educational purposes only and does not constitute professional financial or medical advice.</p>'
-  };
-  document.getElementById('static-page-content').innerHTML = pages[page];
-  window.scrollTo(0, 0);
-}
-
-checkUser();
-loadArticles();
